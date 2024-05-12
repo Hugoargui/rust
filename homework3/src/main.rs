@@ -11,7 +11,7 @@ fn main() {
             println!("You chose option: {option}");
             if option == "--help" {
                 user_input::print_usage(&args);
-                std::process::exit(1);
+                std::process::exit(0);
             }
             option.to_string()
         }
