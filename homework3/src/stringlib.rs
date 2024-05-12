@@ -6,14 +6,6 @@ use slug::slugify;
 use std::error::Error;
 
 pub fn run(input_string: String, user_option: String) -> Result<String, Box<dyn Error>> {
-    // You can use this as a test for the csv option, copy paste it into the terminal and press CTRL-D
-    let _csv = "Language,Paradigm,Year,Creator,Rust_Inspiration
-                C,Imperative,1972,Dennis Ritchie,Medium
-                Java,Object-Oriented,1995,James Gosling,Low
-                Python,Multi-Paradigm,1991,Guido van Rossum,Medium
-                Rust,Multi-Paradigm,2010,Graydon Hoare,High
-                Haskell,Functional,1990,Lennart Augustsson,Medium"
-        .to_string();
     let result = match user_option.as_str() {
         "--lowercase" => to_lowercase(input_string),
         "--uppercase" => to_uppercase(input_string),
@@ -33,7 +25,6 @@ pub fn run(input_string: String, user_option: String) -> Result<String, Box<dyn 
 }
 
 fn is_valid_string(input_string: &str) -> bool {
-    // !input_string.trim().is_empty() && input_string.trim().chars().all(char::is_alphabetic)
     !input_string.trim().is_empty()
 }
 
