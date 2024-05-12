@@ -4,7 +4,7 @@ use std::io;
 pub fn get_string_from_user() -> Result<String, Box<dyn Error>> {
     println!();
     println!("Please enter text to transform");
-    println!("PRESS CTRL-D to finish text input");
+    println!("PRESS CTRL-D to finish text input:");
     match io::read_to_string(io::stdin()) {
         Err(e) => Err(From::from(
             "Failed to read user input, error: ".to_string() + &e.to_string(),

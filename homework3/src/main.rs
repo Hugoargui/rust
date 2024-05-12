@@ -40,6 +40,7 @@ fn main() {
         }
         Ok(output_string) => {
             println!();
+            println!();
             println!("Resulting string:");
             println!("{output_string}");
         }
