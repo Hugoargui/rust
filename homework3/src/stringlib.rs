@@ -6,7 +6,7 @@ use slug::slugify;
 use std::error::Error;
 
 pub fn run(input_string: String, user_option: String) -> Result<String, Box<dyn Error>> {
-    let result = match user_option.as_str() {
+    match user_option.as_str() {
         "--lowercase" => to_lowercase(input_string),
         "--uppercase" => to_uppercase(input_string),
         "--no-spaces" => to_no_spaces(input_string),
@@ -16,11 +16,6 @@ pub fn run(input_string: String, user_option: String) -> Result<String, Box<dyn 
         _ => {
             unreachable!("Unknown arguments should have been handled before.");
         }
-    };
-
-    match result {
-        Ok(output) => Ok(output),
-        Err(e) => Err(e),
     }
 }
 
