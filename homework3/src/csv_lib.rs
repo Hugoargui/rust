@@ -30,6 +30,6 @@ pub fn parse_csv(input_text: String) -> Result<String, Box<dyn Error>> {
         }
         Ok(table.to_string())
     } else {
-        Err(From::from("Empty or broken string".to_string()))
+        Err(From::from("Input text is empty".to_string()))
     }
 }

@@ -27,7 +27,7 @@ pub fn to_lowercase(input_string: String) -> Result<String, Box<dyn Error>> {
     if is_valid_string(&input_string) {
         Ok(input_string.to_lowercase())
     } else {
-        Err(From::from("Empty or broken string".to_string()))
+        Err(From::from("Input text is empty".to_string()))
     }
 }
 
@@ -35,7 +35,7 @@ pub fn to_uppercase(input_string: String) -> Result<String, Box<dyn Error>> {
     if is_valid_string(&input_string) {
         Ok(input_string.to_uppercase())
     } else {
-        Err(From::from("Empty or broken string".to_string()))
+        Err(From::from("Input text is empty".to_string()))
     }
 }
 
@@ -43,14 +43,14 @@ pub fn to_no_spaces(input_string: String) -> Result<String, Box<dyn Error>> {
     if is_valid_string(&input_string) {
         Ok(input_string.trim().replace(' ', "-").to_lowercase())
     } else {
-        Err(From::from("Empty or broken string".to_string()))
+        Err(From::from("Input text is empty".to_string()))
     }
 }
 pub fn to_snakecase(input_string: String) -> Result<String, Box<dyn Error>> {
     if is_valid_string(&input_string) {
         Ok(input_string.trim().replace(' ', "-").to_lowercase())
     } else {
-        Err(From::from("Empty or broken string".to_string()))
+        Err(From::from("Input text is empty".to_string()))
     }
 }
 
@@ -58,6 +58,6 @@ pub fn to_slugified(input_string: String) -> Result<String, Box<dyn Error>> {
     if is_valid_string(&input_string) {
         Ok(slugify(input_string))
     } else {
-        Err(From::from("Empty or broken string".to_string()))
+        Err(From::from("Input text is empty".to_string()))
     }
 }
