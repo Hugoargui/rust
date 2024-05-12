@@ -23,7 +23,14 @@ fn main() {
         }
     };
 
-    let input_string = user_input::get_string_from_user();
+    let input_string = match user_input::get_string_from_user() {
+        Ok(ref string) => string.to_string(),
+        Err(e) => {
+            eprintln!("-----------------------------------------------------");
+            eprintln!("{e}");
+            std::process::exit(1);
+        }
+    };
 
     match stringlib::run(input_string, user_option) {
         Err(e) => {

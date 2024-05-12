@@ -6,6 +6,7 @@ use slug::slugify;
 use std::error::Error;
 
 pub fn run(input_string: String, user_option: String) -> Result<String, Box<dyn Error>> {
+    // You can use this as a test for the csv option, copy paste it into the terminal and press CTRL-D
     let _csv = "Language,Paradigm,Year,Creator,Rust_Inspiration
                 C,Imperative,1972,Dennis Ritchie,Medium
                 Java,Object-Oriented,1995,James Gosling,Low
@@ -19,7 +20,7 @@ pub fn run(input_string: String, user_option: String) -> Result<String, Box<dyn 
         "--no-spaces" => to_no_spaces(input_string),
         "--snake-case" => to_snakecase(input_string),
         "--slugify" => to_slugified(input_string),
-        "--csv" => csv_lib::parse_csv(_csv),
+        "--csv" => csv_lib::parse_csv(input_string),
         _ => {
             unreachable!("Unknown arguments should have been handled before.");
         }

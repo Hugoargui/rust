@@ -1,11 +1,16 @@
 use std::error::Error;
 use std::io;
 
-pub fn get_string_from_user() -> String {
+pub fn get_string_from_user() -> Result<String, Box<dyn Error>> {
     println!();
     println!("Please enter text to transform");
     println!("PRESS CTRL-D to finish text input");
-    io::read_to_string(io::stdin()).expect("failed to read user text from stdin")
+    match io::read_to_string(io::stdin()) {
+        Err(e) => Err(From::from(
+            "Failed to read user input, error: ".to_string() + &e.to_string(),
+        )),
+        Ok(input_text) => Ok(input_text),
+    }
 }
 
 #[allow(clippy::needless_return)]
