@@ -6,13 +6,13 @@ pub fn parse_csv(input_text: String) -> Result<String, Box<dyn Error>> {
     if !input_text.trim().is_empty() {
         let mut reader = csv::Reader::from_reader(input_text.as_bytes());
 
-        let headers = comfy_table::Row::from(reader.headers()?.clone().iter());
+        let header = comfy_table::Row::from(reader.headers()?.clone().iter());
 
         let mut table = comfy_table::Table::new();
         table
             .load_preset(UTF8_FULL)
-            .apply_modifier(UTF8_ROUND_CORNERS);
-        table.set_header(headers);
+            .apply_modifier(UTF8_ROUND_CORNERS)
+            .set_header(header);
 
         for record in reader.records() {
             let record = match record {
