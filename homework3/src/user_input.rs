@@ -1,19 +1,11 @@
 use std::error::Error;
-use std::io::stdin;
+use std::io;
 
 pub fn get_string_from_user() -> String {
     println!();
-    println!("Please enter line to transform");
-    let mut input_string = String::new();
-    stdin()
-        .read_line(&mut input_string)
-        .expect("Failed to read user text from stdin");
-
-    println!();
-    println!("Input string:");
-    println!("{input_string}");
-
-    input_string
+    println!("Please enter text to transform");
+    println!("PRESS CTRL-D to finish text input");
+    io::read_to_string(io::stdin()).expect("failed to read user text from stdin")
 }
 
 #[allow(clippy::needless_return)]

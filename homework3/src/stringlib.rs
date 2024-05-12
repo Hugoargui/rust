@@ -6,16 +6,20 @@ use slug::slugify;
 use std::error::Error;
 
 pub fn run(input_string: String, user_option: String) -> Result<String, Box<dyn Error>> {
-    let csv = "year,make,model,description
-        1948,Porsche,356,Luxury sports car
-        1967,Ford,Mustang fastback 1967,American car";
+    let _csv = "Language,Paradigm,Year,Creator,Rust_Inspiration
+                C,Imperative,1972,Dennis Ritchie,Medium
+                Java,Object-Oriented,1995,James Gosling,Low
+                Python,Multi-Paradigm,1991,Guido van Rossum,Medium
+                Rust,Multi-Paradigm,2010,Graydon Hoare,High
+                Haskell,Functional,1990,Lennart Augustsson,Medium"
+        .to_string();
     let result = match user_option.as_str() {
         "--lowercase" => to_lowercase(input_string),
         "--uppercase" => to_uppercase(input_string),
         "--no-spaces" => to_no_spaces(input_string),
         "--snake-case" => to_snakecase(input_string),
         "--slugify" => to_slugified(input_string),
-        "--csv" => csv_lib::parse_csv(csv.to_string()),
+        "--csv" => csv_lib::parse_csv(_csv),
         _ => {
             unreachable!("Unknown arguments should have been handled before.");
         }
