@@ -15,6 +15,11 @@ pub fn parse_csv(input_text: String) -> Result<String, Box<dyn Error>> {
         table.set_header(headers);
 
         for record in reader.records() {
+            if record.is_err() {
+                return Err(From::from(
+                    "Failed to parse csv".to_string() + &record.unwrap_err().to_string(),
+                ));
+            }
             let record = record?;
             let row = comfy_table::Row::from(record.iter());
             table.add_row(row);
