@@ -14,8 +14,7 @@ pub fn get_string_from_user() -> Result<String, Box<dyn Error>> {
 }
 
 #[allow(clippy::needless_return)]
-#[allow(clippy::ptr_arg)]
-pub fn get_option_from_arguments(arguments: &Vec<String>) -> Result<String, Box<dyn Error>> {
+pub fn get_option_from_arguments(arguments: &[String]) -> Result<String, Box<dyn Error>> {
     // let program_name = &arguments[0];
     let number_of_arguments = arguments.len() - 1;
 
@@ -41,8 +40,7 @@ pub fn get_option_from_arguments(arguments: &Vec<String>) -> Result<String, Box<
     }
 }
 
-#[allow(clippy::ptr_arg)]
-pub fn print_usage(arguments: &Vec<String>) {
+pub fn print_usage(arguments: &[String]) {
     let program_name = &arguments[0];
     eprintln!("-----------------------------------------------------");
     eprintln!("USAGE: {} --argument", program_name);

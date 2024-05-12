@@ -2,6 +2,8 @@ use comfy_table::{self, modifiers::UTF8_ROUND_CORNERS, presets::UTF8_FULL};
 
 use std::error::Error;
 
+// TODO: figure out how to return the error string without this
+#[allow(clippy::unnecessary_unwrap)]
 pub fn parse_csv(input_text: String) -> Result<String, Box<dyn Error>> {
     if !input_text.trim().is_empty() {
         let mut reader = csv::Reader::from_reader(input_text.as_bytes());
