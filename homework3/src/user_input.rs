@@ -1,3 +1,4 @@
+use std::error::Error;
 use std::io::stdin;
 
 pub fn get_string_from_user() -> String {
@@ -15,33 +16,35 @@ pub fn get_string_from_user() -> String {
     input_string
 }
 
-pub fn are_arguments_valid(arguments: &Vec<String>) -> bool {
-    let program_name = &arguments[0];
+#[allow(clippy::needless_return)]
+#[allow(clippy::ptr_arg)]
+pub fn get_option_from_arguments(arguments: &Vec<String>) -> Result<String, Box<dyn Error>> {
+    // let program_name = &arguments[0];
     let number_of_arguments = arguments.len() - 1;
 
     if number_of_arguments == 0 {
-        eprintln!("Error while running program : {}", &program_name);
-        eprintln!("Not enough arguments, program expects exactly one argument");
-        return false;
+        return Err(From::from(
+            "Not enough arguments, program expects exactly one argument".to_string(),
+        ));
     } else if number_of_arguments > 1 {
-        eprintln!("Error while running program : {}", &program_name);
-        eprintln!("Too many arguments, program expects exactly one argument");
-        return false;
+        return Err(From::from(
+            "Too many arguments, program expects exactly one argument".to_string(),
+        ));
     } else {
         let user_option = &arguments[1];
         match user_option.as_str() {
             "--lowercase" | "--uppercase" | "--no-spaces" | "--snake-case" | "--slugify"
-            | "--help" => {
-                return true;
+            | "--csv" | "--help" => {
+                return Ok(user_option.to_string());
             }
             _ => {
-                eprintln!("Unrecognized argument");
-                return false;
+                return Err(From::from("Unrecognized argument".to_string()));
             }
         };
     }
 }
 
+#[allow(clippy::ptr_arg)]
 pub fn print_usage(arguments: &Vec<String>) {
     let program_name = &arguments[0];
     eprintln!("-----------------------------------------------------");
@@ -51,5 +54,7 @@ pub fn print_usage(arguments: &Vec<String>) {
     eprintln!("\t --no-spaces, remove all spaces from the text");
     eprintln!("\t --snake-case, remove all spaces and replace them by a '-'");
     eprintln!("\t --slugify, convert the text in to a slug");
+    eprintln!("\t --csv, parse input text as csv");
+    eprintln!("\t --help, show this help menu");
     eprintln!("-----------------------------------------------------");
 }
