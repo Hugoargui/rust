@@ -17,6 +17,8 @@ jobs:
     - uses: actions/checkout@v4
     - name: Check build
       run: cargo check --verbose
+    - name: Format
+      run: cargo fmt --all -- --check
     - name: Linting
       run: cargo clippy --verbose
     - name: Run tests
