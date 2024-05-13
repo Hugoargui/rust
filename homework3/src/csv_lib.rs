@@ -2,7 +2,7 @@ use comfy_table::{self, modifiers::UTF8_ROUND_CORNERS, presets::UTF8_FULL};
 
 use std::error::Error;
 
-pub fn parse_csv(input_text: String) -> Result<String, Box<dyn Error>> {
+pub fn parse_csv(input_text: &str) -> Result<String, Box<dyn Error>> {
     if !input_text.trim().is_empty() {
         let mut reader = csv::Reader::from_reader(input_text.as_bytes());
 

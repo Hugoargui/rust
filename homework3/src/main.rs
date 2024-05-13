@@ -32,7 +32,7 @@ fn main() {
         }
     };
 
-    match stringlib::run(input_string, user_option) {
+    match stringlib::run(&input_string, &user_option) {
         Err(e) => {
             eprintln!("Problem while transforming input");
             eprintln!("{}", e);
