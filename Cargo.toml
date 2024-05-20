@@ -1,8 +1,9 @@
-
 [workspace]
+resolver = "2"
 
 members = [
     "homework1",
     "homework2",
     "homework3",
+    "homework4",
 ]
