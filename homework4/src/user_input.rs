@@ -20,11 +20,19 @@ pub fn get_string_from_user() -> Result<(String, String), Box<dyn Error>> {
 pub fn parse_user_input(user_input: String) -> Result<(String, String), Box<dyn Error>> {
     let parts: Vec<&str> = user_input.trim().splitn(2, ' ').collect();
     let user_command = parts[0];
-    let user_text = parts[1];
     match user_command {
-        "lowercase" | "uppercase" | "no-spaces" | "snake-case" | "slugify" | "csv" | "help" => {
+        // commands that require user text after the command, check if there is any text
+        "lowercase" | "uppercase" | "no-spaces" | "snake-case" | "slugify" => {
+            if parts.len() < 2 {
+                return Err(From::from(format!(
+                    "Command {user_command} requires some text, found nothing"
+                )));
+            }
+            let user_text = parts[1];
             Ok((user_command.to_string(), user_text.to_string()))
         }
+        // ignore all text after first word, if any
+        "csv" | "help" => Ok((user_command.to_string(), "".to_string())),
         _ => Err(From::from(format!("Unrecognized argument: {user_command}"))),
     }
 }
@@ -38,7 +46,7 @@ pub fn print_usage() {
     eprintln!("\t no-spaces, remove all spaces from the text");
     eprintln!("\t snake-case, remove all spaces and replace them by a '-'");
     eprintln!("\t slugify, convert the text in to a slug");
-    eprintln!("\t csv, parse input text as csv");
+    eprintln!("\t csv, parse example file as csv (ignores input text)");
     eprintln!("\t help, show this help menu");
     eprintln!("-----------------------------------------------------");
 }

@@ -34,7 +34,6 @@ fn main() {
 
     let parsing_thread = thread::spawn(move || loop {
         let (command, text) = rx.recv().unwrap();
-        println!("received string {text} and option {command}");
         match stringlib::run(&text, &command) {
             Err(e) => {
                 eprintln!("Problem while transforming input");

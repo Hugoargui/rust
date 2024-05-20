@@ -12,7 +12,7 @@ pub fn run(input_string: &str, user_option: &str) -> Result<String, Box<dyn Erro
         "no-spaces" => to_no_spaces(input_string),
         "snake-case" => to_snakecase(input_string),
         "slugify" => to_slugified(input_string),
-        "csv" => csv_lib::parse_csv(input_string),
+        "csv" => csv_lib::parse_csv(),
         _ => {
             unreachable!("Unknown arguments should have been handled before.");
         }
