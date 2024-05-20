@@ -1,48 +1,58 @@
 mod stringlib;
 mod user_input;
 
-use std::env;
+use std::{env, sync::mpsc, thread};
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
+    // let args: Vec<String> = env::args().collect();
 
-    let user_option = match user_input::get_option_from_arguments(&args) {
-        Ok(ref option) => {
-            println!("You chose option: {option}");
-            if option == "--help" {
-                user_input::print_usage(&args);
-                std::process::exit(0);
+    let (tx, rx) = mpsc::channel();
+
+    let input_thread = thread::spawn(move || loop {
+        let (user_command, user_input) = match user_input::get_string_from_user() {
+            Ok((command, input)) => {
+                if command == "help" {
+                    user_input::print_usage();
+                    std::process::exit(0);
+                }
+                (command.to_string(), input.to_string())
             }
-            option.to_string()
-        }
-        Err(e) => {
-            eprintln!("-----------------------------------------------------");
-            eprintln!("{e}");
-            user_input::print_usage(&args);
-            std::process::exit(1);
-        }
-    };
+            Err(e) => {
+                eprintln!("\n-----------------------------------------------------");
+                eprintln!("{e}");
+                user_input::print_usage();
+                continue;
+            }
+        };
 
-    let input_string = match user_input::get_string_from_user() {
-        Ok(ref string) => string.to_string(),
-        Err(e) => {
-            eprintln!("-----------------------------------------------------");
-            eprintln!("{e}");
-            std::process::exit(1);
-        }
-    };
+        let _ = tx.send((user_command, user_input));
 
-    match stringlib::run(&input_string, &user_option) {
-        Err(e) => {
-            eprintln!("Problem while transforming input");
-            eprintln!("{}", e);
-            std::process::exit(1);
-        }
-        Ok(output_string) => {
-            println!();
-            println!();
-            println!("Resulting string:");
-            println!("{output_string}");
-        }
-    };
+        // Sleep thread so that this loop doesn't run again a print otput before we get results, which makes it hard to read
+        // In a real application this wouldn't be needed, as would not printing all the time to screen
+        thread::sleep(std::time::Duration::from_secs(1));
+    });
+
+    let parsing_thread = thread::spawn(move || loop {
+        let (command, text) = rx.recv().unwrap();
+        println!("received string {text} and option {command}");
+        match stringlib::run(&text, &command) {
+            Err(e) => {
+                eprintln!("Problem while transforming input");
+                eprintln!("{}", e);
+                std::process::exit(1);
+            }
+            Ok(output_string) => {
+                println!();
+                println!();
+                println!("Resulting string:");
+                println!("{output_string}");
+            }
+        };
+    });
+
+    input_thread.join().expect("The sender thread has panicked");
+    parsing_thread
+        .join()
+        .expect("The receiver thread has panicked");
+    println!("All threads finished execution")
 }

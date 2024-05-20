@@ -7,12 +7,12 @@ use std::error::Error;
 
 pub fn run(input_string: &str, user_option: &str) -> Result<String, Box<dyn Error>> {
     match user_option {
-        "--lowercase" => to_lowercase(input_string),
-        "--uppercase" => to_uppercase(input_string),
-        "--no-spaces" => to_no_spaces(input_string),
-        "--snake-case" => to_snakecase(input_string),
-        "--slugify" => to_slugified(input_string),
-        "--csv" => csv_lib::parse_csv(input_string),
+        "lowercase" => to_lowercase(input_string),
+        "uppercase" => to_uppercase(input_string),
+        "no-spaces" => to_no_spaces(input_string),
+        "snake-case" => to_snakecase(input_string),
+        "slugify" => to_slugified(input_string),
+        "csv" => csv_lib::parse_csv(input_string),
         _ => {
             unreachable!("Unknown arguments should have been handled before.");
         }
@@ -41,7 +41,7 @@ pub fn to_uppercase(input_string: &str) -> Result<String, Box<dyn Error>> {
 
 pub fn to_no_spaces(input_string: &str) -> Result<String, Box<dyn Error>> {
     if is_valid_string(input_string) {
-        Ok(input_string.trim().replace(' ', "-").to_lowercase())
+        Ok(input_string.trim().replace(' ', ""))
     } else {
         Err(From::from("Input text is empty".to_string()))
     }
