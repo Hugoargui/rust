@@ -13,20 +13,35 @@ use homework5::*;
 fn sending_thread(stream: Arc<Mutex<TcpStream>>) {
     let mut stream = stream.lock().unwrap();
     loop {
-        println!("Enter text to send (or .file <path>, .image<path>, .quit)");
+        println!("Enter text to send (or .file <path>, .image <path>, .quit)");
         let mut input = String::new();
         io::stdin()
             .read_line(&mut input)
             .expect("Failed to read from stdin");
-        let input = input.trim().to_string();
+        let input = input.trim();
+        let (command, path) = input.split_once(' ').unwrap_or((input, ""));
 
-        if input == "q" || input == "quit" {
-            println!("Quiting client");
-            break;
-        };
-        let new_message = MessageType::Text(input);
-        println!("Sending {new_message:?}");
-        send_message(&mut stream, &new_message);
+        match command {
+            "q" | "quit" | ".quit" => {
+                println!("Quiting client");
+                process::exit(1);
+            }
+            "file" | ".file" => {
+                println!("Sending file at path: {path}");
+                let message = MessageType::File(path.to_string(), vec![0, 1, 2, 3]);
+                send_message(&mut stream, &message);
+            }
+            "image" | ".image" => {
+                println!("Sending image at path: {path}");
+                let message = MessageType::Image(vec![0, 1, 2, 3]);
+                send_message(&mut stream, &message);
+            }
+            _ => {
+                let new_message = MessageType::Text(input.to_string());
+                println!("Sending {new_message:?}");
+                send_message(&mut stream, &new_message);
+            }
+        }
     }
 }
 
