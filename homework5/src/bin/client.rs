@@ -1,4 +1,5 @@
-#![allow(unused)]
+#![allow(dead_code)]
+#![allow(unused_imports)]
 
 use std::env;
 use std::io::{self, Read, Write};
@@ -8,10 +9,6 @@ use homework5::*;
 
 fn main() {
     let address = get_address_from_arguments(env::args().collect());
-
-    let new_message = MessageType::Text("hello".to_string());
-
-    let serialized = serialize_message(&new_message);
 
     println!("Client connected to: {address}");
     let mut stream = TcpStream::connect(address).unwrap();
@@ -28,6 +25,7 @@ fn main() {
             println!("Quiting client");
             break;
         };
+        let new_message = MessageType::Text(input);
         println!("Sending {new_message:?}");
         send_message(&mut stream, &new_message);
 
