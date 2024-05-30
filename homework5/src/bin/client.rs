@@ -1,15 +1,13 @@
 #![allow(unused)]
 
-use homework5::{deserialize_message, read_message, send_message, serialize_message, MessageType};
-use std::io::prelude::*;
+use std::env;
+use std::io::{self, Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 
+use homework5::*;
+
 fn main() {
-    let default_host = "localhost".to_string();
-    let default_port = "11111".to_string();
-    let hostname = default_host;
-    let port = default_port;
-    let address = format!("{}:{}", hostname, port);
+    let address = get_address_from_arguments(env::args().collect());
 
     let new_message = MessageType::Text("hello".to_string());
 
@@ -18,9 +16,34 @@ fn main() {
     println!("Client connected to: {address}");
     let mut stream = TcpStream::connect(address).unwrap();
 
-    println!("Sending {new_message:?}");
-    send_message(&mut stream, &new_message);
+    loop {
+        println!("Enter text to send (or .file <path>, .image<path>, .quit)");
+        let mut input = String::new();
+        io::stdin()
+            .read_line(&mut input)
+            .expect("Failed to read from stdin");
+        let input = input.trim().to_string();
 
-    let response = read_message(stream);
-    println!("Received {response:#?}");
+        if input == "q" || input == "quit" {
+            println!("Quiting client");
+            break;
+        };
+        println!("Sending {new_message:?}");
+        send_message(&mut stream, &new_message);
+
+        match calculate_message_length(&stream) {
+            Err(e) => {
+                eprintln!("Server lost connection with server with error: {}", e);
+                break;
+            }
+            Ok(len) => {
+                let message =
+                    read_message(stream.try_clone().expect("failed to clone stream"), len);
+                println!("Received: {message:?}");
+            }
+        }
+
+        // let response = read_message(stream.try_clone().expect("failed to read message"));
+        // println!("Received {response:#?}");
+    }
 }
