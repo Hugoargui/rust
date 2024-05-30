@@ -26,12 +26,6 @@ fn handle_client(
             Ok(len) => {
                 let message =
                     read_message(stream.try_clone().expect("failed to clone stream"), len);
-                println!("Received: {message:?} from client {addr}");
-
-                // let _ = MessageType::Text("Received".to_string());
-
-                // println!("Responded: {message:?}");
-                // send_message(&mut stream, &message);
 
                 for mut client in clients.iter_mut() {
                     let client_addr = match client.peer_addr() {
@@ -47,19 +41,22 @@ fn handle_client(
                         continue;
                     }
 
-                    println!("Forwarded {} bytes to client: {}", len, client_addr);
-                    send_message(&mut client, &message);
-
-                    // let buffer = [0; 512];
-                    // if let Err(e) = client.write_all(&buffer[..len]) {
-                    //     eprintln!("Failed to send data to client: {}", e);
-                    // } else {
-                    //     let client_addr = match client.peer_addr() {
-                    //         Ok(addr) => addr.to_string(),
-                    //         Err(_) => String::from("Unknown"),
-                    //     };
-                    //     println!("Forwarded {} bytes to client: {}", len, client_addr);
-                    // }
+                    match message {
+                        MessageType::Text(..) => {
+                            println!(
+                                "Forwarded {len} bytes from client {addr} to client: {client_addr}"
+                            );
+                            send_message(&mut client, &message);
+                        }
+                        MessageType::File(ref path, _) => {
+                            println!( "Forwarded file {path} of {len} bytes from client {addr} to client: {client_addr}");
+                            send_message(&mut client, &message);
+                        }
+                        MessageType::Image(..) => {
+                            println!("Forwarded image of {len} bytes from client {addr} to client: {client_addr}");
+                            send_message(&mut client, &message);
+                        }
+                    }
                 }
             }
         }
@@ -103,27 +100,6 @@ fn listen_and_accept(address: &str) {
             }
         }
     }
-
-    // let client_map: ClientMap = Arc::new(RwLock::new(HashMap::new()));
-    // pub type ClientMap = Arc<RwLock<HashMap<SocketAddr, TcpStream>>>;
-    // let clients = Arc::clone(&client_map);
-
-    // let mut clients: HashMap<SocketAddr, TcpStream> = HashMap::new();
-    //
-    // for stream in listener.incoming() {
-    //     let mut stream = stream.unwrap();
-    //     let addr = stream.peer_addr().unwrap();
-    //     clients.insert(addr, stream.try_clone().unwrap());
-    //
-    //     let message = read_message(clients.get(&addr).unwrap().try_clone().unwrap());
-    //
-    //     println!("Received: {message:?}");
-    //
-    //     let _ = MessageType::Text("Received".to_string());
-    //
-    //     println!("Responded: {message:?}");
-    //     send_message(&mut stream, &message);
-    // }
 }
 
 fn main() {

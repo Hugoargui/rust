@@ -2,6 +2,8 @@
 #![allow(unused_imports)]
 
 use std::env;
+use std::error::Error;
+use std::fs;
 use std::io::{self, Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::process;
@@ -28,12 +30,12 @@ fn sending_thread(stream: Arc<Mutex<TcpStream>>) {
             }
             "file" | ".file" => {
                 println!("Sending file at path: {path}");
-                let message = MessageType::File(path.to_string(), vec![0, 1, 2, 3]);
+                let message = generate_file_message(path);
                 send_message(&mut stream, &message);
             }
             "image" | ".image" => {
                 println!("Sending image at path: {path}");
-                let message = MessageType::Image(vec![0, 1, 2, 3]);
+                let message = generate_image_message();
                 send_message(&mut stream, &message);
             }
             _ => {
@@ -50,13 +52,24 @@ fn receiving_thread(stream: Arc<Mutex<TcpStream>>) {
     loop {
         match calculate_message_length(&stream) {
             Err(e) => {
-                eprintln!("Server lost connection with server with error: {}", e);
+                eprintln!("Client lost connection with server with error: {}", e);
                 break;
             }
             Ok(len) => {
                 let message =
                     read_message(stream.try_clone().expect("failed to clone stream"), len);
-                println!("Received: {message:?}");
+
+                match message {
+                    MessageType::Text(ref raw_message) => {
+                        println!("{raw_message}");
+                    }
+                    MessageType::File(ref path, ref file_contents) => {
+                        handle_incoming_file(path, file_contents);
+                    }
+                    MessageType::Image(ref bytes) => {
+                        handle_incoming_image(bytes);
+                    }
+                }
             }
         }
     }
@@ -88,4 +101,24 @@ fn main() {
 
     let _ = thread_handle_1.join();
     let _ = thread_handle_2.join();
+}
+
+fn generate_file_message(path: &str) -> MessageType {
+    let message: String = fs::read_to_string(path).unwrap();
+    println!("{}", message);
+
+    MessageType::File(path.to_string(), message.as_bytes().to_vec())
+}
+
+fn generate_image_message() -> MessageType {
+    MessageType::Image(vec![0, 1, 2, 3])
+}
+
+fn handle_incoming_file(path: &str, raw_bytes: &[u8]) {
+    let string = String::from_utf8(raw_bytes.to_vec()).expect("Our bytes should be valid utf8");
+    println!("Received file {path} with content {string}");
+}
+
+fn handle_incoming_image(raw_bytes: &[u8]) {
+    println!("Received image with content {raw_bytes:?}");
 }
