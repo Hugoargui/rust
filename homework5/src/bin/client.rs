@@ -6,10 +6,12 @@ use std::io::{self, Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::process;
 use std::sync::{Arc, Mutex};
+use std::thread;
 
 use homework5::*;
 
-fn sending_thread(mut stream: TcpStream) {
+fn sending_thread(stream: Arc<Mutex<TcpStream>>) {
+    let mut stream = stream.lock().unwrap();
     loop {
         println!("Enter text to send (or .file <path>, .image<path>, .quit)");
         let mut input = String::new();
@@ -25,21 +27,23 @@ fn sending_thread(mut stream: TcpStream) {
         let new_message = MessageType::Text(input);
         println!("Sending {new_message:?}");
         send_message(&mut stream, &new_message);
+    }
+}
 
-        // match calculate_message_length(&stream) {
-        //     Err(e) => {
-        //         eprintln!("Server lost connection with server with error: {}", e);
-        //         break;
-        //     }
-        //     Ok(len) => {
-        //         let message =
-        //             read_message(stream.try_clone().expect("failed to clone stream"), len);
-        //         println!("Received: {message:?}");
-        //     }
-        // }
-
-        // let response = read_message(stream.try_clone().expect("failed to read message"));
-        // println!("Received {response:#?}");
+fn receiving_thread(stream: Arc<Mutex<TcpStream>>) {
+    let stream = stream.lock().unwrap();
+    loop {
+        match calculate_message_length(&stream) {
+            Err(e) => {
+                eprintln!("Server lost connection with server with error: {}", e);
+                break;
+            }
+            Ok(len) => {
+                let message =
+                    read_message(stream.try_clone().expect("failed to clone stream"), len);
+                println!("Received: {message:?}");
+            }
+        }
     }
 }
 
@@ -55,11 +59,18 @@ fn main() {
         }
     };
 
-    sending_thread(stream);
+    // sending_thread(stream);
 
-    // let stream_arc = Arc::new(Mutex::new(
-    //     stream.try_clone().expect("Failed to clone stream!"),
-    // ));
+    let stream1 = Arc::new(Mutex::new(
+        stream.try_clone().expect("Failed to clone stream!"),
+    ));
+    let stream2 = Arc::new(Mutex::new(
+        stream.try_clone().expect("Failed to clone stream!"),
+    ));
 
-    // thread::spawn(move || sending_thread(stream_arc));
+    let thread_handle_1 = thread::spawn(move || sending_thread(stream1));
+    let thread_handle_2 = thread::spawn(move || receiving_thread(stream2));
+
+    let _ = thread_handle_1.join();
+    let _ = thread_handle_2.join();
 }
