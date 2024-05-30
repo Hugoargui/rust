@@ -12,7 +12,11 @@ use dashmap::DashMap;
 
 use homework5::*;
 
-fn handle_client(addr: SocketAddr, mut stream: TcpStream) {
+fn handle_client(
+    addr: SocketAddr,
+    stream: TcpStream,
+    clients: &Arc<DashMap<SocketAddr, TcpStream>>,
+) {
     loop {
         match calculate_message_length(&stream) {
             Err(_) => {
@@ -22,12 +26,41 @@ fn handle_client(addr: SocketAddr, mut stream: TcpStream) {
             Ok(len) => {
                 let message =
                     read_message(stream.try_clone().expect("failed to clone stream"), len);
-                println!("Received: {message:?}");
+                println!("Received: {message:?} from client {addr}");
 
-                let _ = MessageType::Text("Received".to_string());
+                // let _ = MessageType::Text("Received".to_string());
 
-                println!("Responded: {message:?}");
-                send_message(&mut stream, &message);
+                // println!("Responded: {message:?}");
+                // send_message(&mut stream, &message);
+
+                for mut client in clients.iter_mut() {
+                    let client_addr = match client.peer_addr() {
+                        Ok(addr) => addr,
+                        Err(_) => {
+                            eprintln!("Failed to get client address");
+                            continue;
+                        }
+                    };
+
+                    if client_addr == addr {
+                        // Don't send message to ourselves
+                        continue;
+                    }
+
+                    println!("Forwarded {} bytes to client: {}", len, client_addr);
+                    send_message(&mut client, &message);
+
+                    // let buffer = [0; 512];
+                    // if let Err(e) = client.write_all(&buffer[..len]) {
+                    //     eprintln!("Failed to send data to client: {}", e);
+                    // } else {
+                    //     let client_addr = match client.peer_addr() {
+                    //         Ok(addr) => addr.to_string(),
+                    //         Err(_) => String::from("Unknown"),
+                    //     };
+                    //     println!("Forwarded {} bytes to client: {}", len, client_addr);
+                    // }
+                }
             }
         }
     }
@@ -48,16 +81,22 @@ fn listen_and_accept(address: &str) {
         }
     };
 
-    // let client_map: DashMap<SocketAddr, TcpStream> = DashMap::new();
+    let client_map: Arc<DashMap<SocketAddr, TcpStream>> = Arc::new(DashMap::new());
 
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
                 let addr = stream.peer_addr().expect("Failed to get clients address");
                 println!("Server established connection with client {}", addr);
-                // client_map.insert(addr, stream.try_clone().expect("failed to insert client into client map"));
+                client_map.insert(
+                    addr,
+                    stream
+                        .try_clone()
+                        .expect("failed to insert client into client map"),
+                );
 
-                thread::spawn(move || handle_client(addr, stream));
+                let clone = client_map.clone();
+                thread::spawn(move || handle_client(addr, stream, &clone));
             }
             Err(e) => {
                 eprintln!("Failed to accept connection: {}", e);
