@@ -1,11 +1,7 @@
-#![allow(dead_code)]
-#![allow(unused_imports)]
-// use std::collections::HashMap;
 use std::env;
-use std::io::{self, Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::process;
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::Arc;
 use std::thread;
 
 use dashmap::DashMap;
