@@ -31,8 +31,14 @@ fn sending_thread(stream: Arc<Mutex<TcpStream>>) {
             }
             "file" | ".file" => {
                 println!("Sending file at path: {path}");
-                let message = generate_file_message(path);
-                send_message(&mut stream, &message);
+                match generate_file_message(path) {
+                    Err(why) => {
+                        eprintln!("Couldn't open {path} with error: {why}")
+                    }
+                    Ok(message) => {
+                        send_message(&mut stream, &message);
+                    }
+                }
             }
             "image" | ".image" => {
                 println!("Sending image at path: {path}");
@@ -102,11 +108,14 @@ fn main() {
     let _ = thread_handle_2.join();
 }
 
-fn generate_file_message(path: &str) -> MessageType {
-    let message: String = fs::read_to_string(path).unwrap();
-    println!("{}", message);
-
-    MessageType::File(path.to_string(), message.as_bytes().to_vec())
+fn generate_file_message(path: &str) -> Result<MessageType, String> {
+    match fs::read_to_string(path) {
+        Err(why) => Err(why.to_string()),
+        Ok(message) => Ok(MessageType::File(
+            path.to_string(),
+            message.as_bytes().to_vec(),
+        )),
+    }
 }
 
 fn generate_image_message() -> MessageType {
@@ -114,17 +123,30 @@ fn generate_image_message() -> MessageType {
 }
 
 fn handle_incoming_file(path: &str, raw_bytes: &[u8]) {
-    let string = String::from_utf8(raw_bytes.to_vec()).expect("Our bytes should be valid utf8");
-    println!("Received file {path} with content {string}");
-    // let mut file = OpenOptions::new()
-    //     .read(true)
-    //     .write(true) // <--------- this
-    //     .truncate(true)
-    //     .create(true)
-    //     .open("/file/foo.txt")
-    //     .unwrap();
-    // file.seek(SeekFrom::Start(0)).unwrap();
-    // file.write_all(raw_bytes).unwrap();
+    let path = format! {"files/{path}"};
+
+    match OpenOptions::new()
+        .write(true) // <--------- this
+        .truncate(true)
+        .create(true)
+        .open(path.clone())
+    {
+        Err(why) => {
+            eprint!("Cannot store into {path} with error: {why}");
+        }
+        Ok(mut file) => {
+            file.seek(SeekFrom::Start(0)).unwrap();
+            // file.write_all(raw_bytes).unwrap();
+            match file.write_all(raw_bytes) {
+                Err(why) => {
+                    eprintln!("Failed to write into {path} with error: {why}");
+                }
+                Ok(_) => {
+                    println!("File received and stored into {path}");
+                }
+            }
+        }
+    }
 }
 
 fn handle_incoming_image(raw_bytes: &[u8]) {
