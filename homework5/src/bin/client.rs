@@ -12,7 +12,9 @@ use image::io::Reader as ImageReader;
 use homework5::*;
 
 fn sending_thread(stream: Arc<Mutex<TcpStream>>) {
-    let mut stream = stream.lock().unwrap();
+    let mut stream = stream
+        .lock()
+        .expect("canot lock the stream, we have big problems, panic");
     loop {
         println!("> Enter text to send (or file <path>, image <path>, quit)");
         let mut input = String::new();
@@ -56,7 +58,9 @@ fn sending_thread(stream: Arc<Mutex<TcpStream>>) {
 }
 
 fn receiving_thread(stream: Arc<Mutex<TcpStream>>) {
-    let stream = stream.lock().unwrap();
+    let stream = stream
+        .lock()
+        .expect("canot lock the stream, we have big problems, panic");
     loop {
         match calculate_message_length(&stream) {
             Err(e) => {
@@ -133,7 +137,7 @@ fn handle_incoming_file(path: &str, raw_bytes: &[u8]) {
     let path = format! {"files/{path}"};
 
     match OpenOptions::new()
-        .write(true) // <--------- this
+        .write(true)
         .truncate(true)
         .create(true)
         .open(path.clone())
@@ -142,7 +146,7 @@ fn handle_incoming_file(path: &str, raw_bytes: &[u8]) {
             eprint!("Cannot store into {path} with error: {why}");
         }
         Ok(mut file) => {
-            file.seek(SeekFrom::Start(0)).unwrap();
+            file.seek(SeekFrom::Start(0)).expect("Seek from front of correctly open file shouldn't fail, if it does we have bigger problems, panic");
             match file.write_all(raw_bytes) {
                 Err(why) => {
                     eprintln!("Failed to write into {path} with error: {why}");
