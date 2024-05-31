@@ -7,8 +7,8 @@ use std::process;
 use std::sync::{Arc, Mutex};
 use std::thread;
 
+use chrono::Utc;
 use image::io::Reader as ImageReader;
-// use image::ImageFormat;
 
 use homework5::*;
 
@@ -151,7 +151,6 @@ fn handle_incoming_file(path: &str, raw_bytes: &[u8]) {
         }
         Ok(mut file) => {
             file.seek(SeekFrom::Start(0)).unwrap();
-            // file.write_all(raw_bytes).unwrap();
             match file.write_all(raw_bytes) {
                 Err(why) => {
                     eprintln!("Failed to write into {path} with error: {why}");
@@ -165,20 +164,28 @@ fn handle_incoming_file(path: &str, raw_bytes: &[u8]) {
 }
 
 fn handle_incoming_image(raw_bytes: &[u8]) {
+    // We receive raw data, it could be any image format, decode it as soo
     let reader = ImageReader::new(Cursor::new(raw_bytes))
         .with_guessed_format()
         .expect("Cursor io never fails");
     println!("Received image with format {:?}", reader.format());
 
-    let image = reader.decode().unwrap();
-    let path = "dda.png";
-
-    match image.save_with_format(path, image::ImageFormat::Png) {
+    match reader.decode() {
         Err(why) => {
-            eprint!("Cannot store into {path} with error: {why}");
+            eprint!("Failed to decode image with error: {why}");
         }
-        Ok(_) => {
-            println!("Image received and stored into {path}");
+        Ok(image) => {
+            let timestamp = Utc::now().timestamp();
+            let path = format! {"images/{timestamp}.png"};
+
+            match image.save_with_format(path.clone(), image::ImageFormat::Png) {
+                Err(why) => {
+                    eprint!("Cannot store into {path} with error: {why}");
+                }
+                Ok(_) => {
+                    println!("Image received and stored into {path}");
+                }
+            }
         }
     }
 }
