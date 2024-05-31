@@ -1,13 +1,14 @@
 use std::env;
 use std::fs;
 use std::fs::OpenOptions;
-use std::io::{self, Seek, SeekFrom, Write};
+use std::io::{self, Cursor, Seek, SeekFrom, Write};
 use std::net::TcpStream;
 use std::process;
 use std::sync::{Arc, Mutex};
 use std::thread;
 
 use image::io::Reader as ImageReader;
+// use image::ImageFormat;
 
 use homework5::*;
 
@@ -28,7 +29,7 @@ fn sending_thread(stream: Arc<Mutex<TcpStream>>) {
                 process::exit(1);
             }
             "file" | ".file" => {
-                println!("Sending file at path: {path}");
+                println!("Sending file: {path}");
                 match generate_file_message(path) {
                     Err(why) => {
                         eprintln!("Couldn't open {path} with error: {why}")
@@ -38,18 +39,17 @@ fn sending_thread(stream: Arc<Mutex<TcpStream>>) {
                     }
                 }
             }
-            "image" | ".image" => {
-                println!("Sending image at path: {path}");
-                match generate_image_message(path) {
-                    Err(why) => {
-                        eprintln!("Couldn't open {path} with error: {why}")
-                    }
-                    Ok(message) => {
-                        send_message(&mut stream, &message);
-                    }
+            "image" | ".image" => match generate_image_message(path) {
+                Err(why) => {
+                    eprintln!("Couldn't open {path} with error: {why}")
                 }
-            }
+                Ok(message) => {
+                    println!("Sending image: {path}");
+                    send_message(&mut stream, &message);
+                }
+            },
             _ => {
+                // no image or file, forward all data as plain text
                 let new_message = MessageType::Text(input.to_string());
                 println!("Sending {new_message:?}");
                 send_message(&mut stream, &new_message);
@@ -123,12 +123,17 @@ fn generate_file_message(path: &str) -> Result<MessageType, String> {
 }
 
 fn generate_image_message(path: &str) -> Result<MessageType, String> {
-    match ImageReader::open(path) {
+    // Don't bother decoding image here, just forward it as raw bytes
+    match std::fs::read(path) {
+        Ok(image) => {
+            let reader = ImageReader::new(Cursor::new(image.clone()))
+                .with_guessed_format()
+                .expect("Cursor io never fails");
+            println!("Received image with format {:?}", reader.format());
+
+            Ok(MessageType::Image(image))
+        }
         Err(why) => Err(why.to_string()),
-        Ok(image) => match image.decode() {
-            Err(why) => Err(why.to_string()),
-            Ok(image) => Ok(MessageType::Image(image.into_bytes())),
-        },
     }
 }
 
@@ -159,6 +164,21 @@ fn handle_incoming_file(path: &str, raw_bytes: &[u8]) {
     }
 }
 
-fn handle_incoming_image(_raw_bytes: &[u8]) {
-    println!("Received image");
+fn handle_incoming_image(raw_bytes: &[u8]) {
+    let reader = ImageReader::new(Cursor::new(raw_bytes))
+        .with_guessed_format()
+        .expect("Cursor io never fails");
+    println!("Received image with format {:?}", reader.format());
+
+    let image = reader.decode().unwrap();
+    let path = "dda.png";
+
+    match image.save_with_format(path, image::ImageFormat::Png) {
+        Err(why) => {
+            eprint!("Cannot store into {path} with error: {why}");
+        }
+        Ok(_) => {
+            println!("Image received and stored into {path}");
+        }
+    }
 }
