@@ -1,15 +1,13 @@
-#![allow(dead_code)]
-#![allow(unused_imports)]
-
 use std::env;
-use std::error::Error;
 use std::fs;
 use std::fs::OpenOptions;
-use std::io::{self, Read, Seek, SeekFrom, Write};
-use std::net::{SocketAddr, TcpListener, TcpStream};
+use std::io::{self, Seek, SeekFrom, Write};
+use std::net::TcpStream;
 use std::process;
 use std::sync::{Arc, Mutex};
 use std::thread;
+
+use image::io::Reader as ImageReader;
 
 use homework5::*;
 
@@ -42,8 +40,14 @@ fn sending_thread(stream: Arc<Mutex<TcpStream>>) {
             }
             "image" | ".image" => {
                 println!("Sending image at path: {path}");
-                let message = generate_image_message();
-                send_message(&mut stream, &message);
+                match generate_image_message(path) {
+                    Err(why) => {
+                        eprintln!("Couldn't open {path} with error: {why}")
+                    }
+                    Ok(message) => {
+                        send_message(&mut stream, &message);
+                    }
+                }
             }
             _ => {
                 let new_message = MessageType::Text(input.to_string());
@@ -118,8 +122,14 @@ fn generate_file_message(path: &str) -> Result<MessageType, String> {
     }
 }
 
-fn generate_image_message() -> MessageType {
-    MessageType::Image(vec![0, 1, 2, 3])
+fn generate_image_message(path: &str) -> Result<MessageType, String> {
+    match ImageReader::open(path) {
+        Err(why) => Err(why.to_string()),
+        Ok(image) => match image.decode() {
+            Err(why) => Err(why.to_string()),
+            Ok(image) => Ok(MessageType::Image(image.into_bytes())),
+        },
+    }
 }
 
 fn handle_incoming_file(path: &str, raw_bytes: &[u8]) {
@@ -149,6 +159,6 @@ fn handle_incoming_file(path: &str, raw_bytes: &[u8]) {
     }
 }
 
-fn handle_incoming_image(raw_bytes: &[u8]) {
-    println!("Received image with content {raw_bytes:?}");
+fn handle_incoming_image(_raw_bytes: &[u8]) {
+    println!("Received image");
 }
