@@ -4,7 +4,8 @@
 use std::env;
 use std::error::Error;
 use std::fs;
-use std::io::{self, Read, Write};
+use std::fs::OpenOptions;
+use std::io::{self, Read, Seek, SeekFrom, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::process;
 use std::sync::{Arc, Mutex};
@@ -87,8 +88,6 @@ fn main() {
         }
     };
 
-    // sending_thread(stream);
-
     let stream1 = Arc::new(Mutex::new(
         stream.try_clone().expect("Failed to clone stream!"),
     ));
@@ -117,6 +116,15 @@ fn generate_image_message() -> MessageType {
 fn handle_incoming_file(path: &str, raw_bytes: &[u8]) {
     let string = String::from_utf8(raw_bytes.to_vec()).expect("Our bytes should be valid utf8");
     println!("Received file {path} with content {string}");
+    // let mut file = OpenOptions::new()
+    //     .read(true)
+    //     .write(true) // <--------- this
+    //     .truncate(true)
+    //     .create(true)
+    //     .open("/file/foo.txt")
+    //     .unwrap();
+    // file.seek(SeekFrom::Start(0)).unwrap();
+    // file.write_all(raw_bytes).unwrap();
 }
 
 fn handle_incoming_image(raw_bytes: &[u8]) {

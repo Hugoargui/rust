@@ -21,6 +21,7 @@ fn handle_client(
         match calculate_message_length(&stream) {
             Err(_) => {
                 eprintln!("Server lost connection with client {}", addr);
+                clients.remove(&addr);
                 break;
             }
             Ok(len) => {
