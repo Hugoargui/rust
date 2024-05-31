@@ -1,6 +1,5 @@
 use std::env;
-use std::fs;
-use std::fs::OpenOptions;
+use std::fs::{self, OpenOptions};
 use std::io::{self, Cursor, Seek, SeekFrom, Write};
 use std::net::TcpStream;
 use std::process;
@@ -130,6 +129,7 @@ fn generate_image_message(path: &str) -> Result<MessageType, String> {
 }
 
 fn handle_incoming_file(path: &str, raw_bytes: &[u8]) {
+    fs::create_dir_all("files").expect("Cannot create directory");
     let path = format! {"files/{path}"};
 
     match OpenOptions::new()
@@ -168,6 +168,7 @@ fn handle_incoming_image(raw_bytes: &[u8]) {
         }
         Ok(image) => {
             let timestamp = Utc::now().timestamp();
+            fs::create_dir_all("images").expect("Cannot create directory");
             let path = format! {"images/{timestamp}.png"};
 
             match image.save_with_format(path.clone(), image::ImageFormat::Png) {
