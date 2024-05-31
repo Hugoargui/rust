@@ -25,9 +25,9 @@ cargo run --bin client localhost 8080
 
 Usage: 
 - to terminate the server, the only option is Control-C
-- type q, quit or .quit to exit the client
-- type file or .file followed by the path of the file to send it. All other clients will save it wit the same name to files/xxx
-- type image or .image followed by the path to the image to send it. All clients will convert it to png and store it in images/timestamp.png
+- type q or quit to exit the client
+- type file followed by the path of the file to send it. All other clients will save it wit the same name to files/xxx
+- type image followed by the path to the image (in any valid image format) to send it. All clients will convert it to png and store it in images/timestamp.png
 - type anything else and it will be forwarded as plain text to all clients
 
 ![image](https://github.com/Hugoargui/rust/assets/6458679/85d62d4d-6f36-44ed-a4d8-0b879faf4a86)

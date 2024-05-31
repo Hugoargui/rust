@@ -14,7 +14,7 @@ use homework5::*;
 fn sending_thread(stream: Arc<Mutex<TcpStream>>) {
     let mut stream = stream.lock().unwrap();
     loop {
-        println!("> Enter text to send (or .file <path>, .image <path>, .quit)");
+        println!("> Enter text to send (or file <path>, image <path>, quit)");
         let mut input = String::new();
         io::stdin()
             .read_line(&mut input)
@@ -23,11 +23,11 @@ fn sending_thread(stream: Arc<Mutex<TcpStream>>) {
         let (command, path) = input.split_once(' ').unwrap_or((input, ""));
 
         match command {
-            "q" | "quit" | ".quit" => {
+            "q" | "quit" => {
                 println!("Quiting client");
                 process::exit(1);
             }
-            "file" | ".file" => match generate_file_message(path) {
+            "file" => match generate_file_message(path) {
                 Err(why) => {
                     eprintln!("Couldn't open {path} with error: {why}")
                 }
@@ -36,7 +36,7 @@ fn sending_thread(stream: Arc<Mutex<TcpStream>>) {
                     send_message(&mut stream, &message);
                 }
             },
-            "image" | ".image" => match generate_image_message(path) {
+            "image" => match generate_image_message(path) {
                 Err(why) => {
                     eprintln!("Couldn't open {path} with error: {why}")
                 }
