@@ -3,7 +3,7 @@ To run, from directory rust/homework5 type:
 ```
 cargo run --bin [server or client] [optional host ip] [optional port] 
 ```
-IF no default host ip or ports are provided, localhost and 11111 will be used. 
+If no default host ip or ports are provided, localhost and 11111 will be used. 
 
 Example: 
 
