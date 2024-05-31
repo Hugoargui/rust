@@ -15,7 +15,7 @@ use homework5::*;
 fn sending_thread(stream: Arc<Mutex<TcpStream>>) {
     let mut stream = stream.lock().unwrap();
     loop {
-        println!("Enter text to send (or .file <path>, .image <path>, .quit)");
+        println!("> Enter text to send (or .file <path>, .image <path>, .quit)");
         let mut input = String::new();
         io::stdin()
             .read_line(&mut input)
@@ -28,17 +28,15 @@ fn sending_thread(stream: Arc<Mutex<TcpStream>>) {
                 println!("Quiting client");
                 process::exit(1);
             }
-            "file" | ".file" => {
-                println!("Sending file: {path}");
-                match generate_file_message(path) {
-                    Err(why) => {
-                        eprintln!("Couldn't open {path} with error: {why}")
-                    }
-                    Ok(message) => {
-                        send_message(&mut stream, &message);
-                    }
+            "file" | ".file" => match generate_file_message(path) {
+                Err(why) => {
+                    eprintln!("Couldn't open {path} with error: {why}")
                 }
-            }
+                Ok(message) => {
+                    println!("Sending file: {path}");
+                    send_message(&mut stream, &message);
+                }
+            },
             "image" | ".image" => match generate_image_message(path) {
                 Err(why) => {
                     eprintln!("Couldn't open {path} with error: {why}")
@@ -72,7 +70,7 @@ fn receiving_thread(stream: Arc<Mutex<TcpStream>>) {
 
                 match message {
                     MessageType::Text(ref raw_message) => {
-                        println!("{raw_message}");
+                        println!("Received text: {raw_message}");
                     }
                     MessageType::File(ref path, ref file_contents) => {
                         handle_incoming_file(path, file_contents);
@@ -81,6 +79,7 @@ fn receiving_thread(stream: Arc<Mutex<TcpStream>>) {
                         handle_incoming_image(bytes);
                     }
                 }
+                println!("> Enter text to send (or .file <path>, .image <path>, .quit)");
             }
         }
     }
@@ -125,14 +124,7 @@ fn generate_file_message(path: &str) -> Result<MessageType, String> {
 fn generate_image_message(path: &str) -> Result<MessageType, String> {
     // Don't bother decoding image here, just forward it as raw bytes
     match std::fs::read(path) {
-        Ok(image) => {
-            let reader = ImageReader::new(Cursor::new(image.clone()))
-                .with_guessed_format()
-                .expect("Cursor io never fails");
-            println!("Received image with format {:?}", reader.format());
-
-            Ok(MessageType::Image(image))
-        }
+        Ok(image) => Ok(MessageType::Image(image)),
         Err(why) => Err(why.to_string()),
     }
 }
