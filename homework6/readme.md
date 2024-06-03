@@ -1,21 +1,40 @@
-To run, from directory rust/homework5 type: 
+# Running directly from this crate
+
+To run directly, from directory rust/homework6 type: 
 
 ```
-cargo run --bin [server or client] [optional host ip] [optional port] 
+cargo run  [server or client] [optional host ip] [optional port] 
 ```
 If no default host ip or ports are provided, localhost and 11111 will be used. 
 
 Example: 
 
 ```
-cargo run --bin server localhost 8080
+cargo run server localhost 8080
 ```
-
 or 
 
 ```
-cargo run --bin client localhost 8080
+cargo run client localhost 8080
 ```
+
+# Using as a library
+
+Otherwise, client and server can be imported as normal crates. 
+
+```rust
+use homework6::client;
+use homework6::server;
+
+// to run the server:
+server::run(hostname, port);
+
+// to launch one client
+client::run(hostname, port);
+```
+Note that in that case, default hostname/port implementation is up to the user, the crates assume you already know which hostname/port you want to use. 
+
+# Usage Details
 
  - Server must be running before any client is launched, otherwise clients can't connect
  - Only one server should run at once
@@ -30,5 +49,6 @@ Usage:
 - type image followed by the path to the image (in any valid image format) to send it. All clients will convert it to png and store it in images/timestamp.png
 - type anything else and it will be forwarded as plain text to all clients
 
-![image](https://github.com/Hugoargui/rust/assets/6458679/85d62d4d-6f36-44ed-a4d8-0b879faf4a86)
+![image](https://github.com/Hugoargui/rust/assets/6458679/7d425d30-f50b-45c8-abec-58748f4ff258)
+
 
