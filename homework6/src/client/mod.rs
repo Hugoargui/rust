@@ -10,6 +10,7 @@ use image::io::Reader as ImageReader;
 
 use crate::common::*;
 
+// Thread that reads user input and sends relevant data to server
 fn sending_thread(stream: Arc<Mutex<TcpStream>>) {
     let mut stream = stream.lock().unwrap();
     loop {
@@ -54,11 +55,14 @@ fn sending_thread(stream: Arc<Mutex<TcpStream>>) {
     }
 }
 
+// Thread that listens to incoming data from server and prints it to stdout.
 fn receiving_thread(stream: Arc<Mutex<TcpStream>>) {
     let stream = stream.lock().unwrap();
+    // Loop through all incoming messages
     loop {
         match calculate_message_length(&stream) {
             Err(e) => {
+                // If server goes down or any error happens, lenght parsing will fail.
                 eprintln!("Client lost connection with server with error: {}", e);
                 break;
             }
@@ -77,6 +81,7 @@ fn receiving_thread(stream: Arc<Mutex<TcpStream>>) {
                         handle_incoming_image(bytes);
                     }
                 }
+                // Done with processing, print usage again.
                 println!("> Enter text to send (or .file <path>, .image <path>, .quit)");
             }
         }
@@ -102,6 +107,7 @@ pub fn run(hostname: String, port: String) {
         stream.try_clone().expect("Failed to clone stream!"),
     ));
 
+    // Spawn the two threads. They share stdout and the stream but otherwise don't interact with each other.
     let thread_handle_1 = thread::spawn(move || sending_thread(stream1));
     let thread_handle_2 = thread::spawn(move || receiving_thread(stream2));
 

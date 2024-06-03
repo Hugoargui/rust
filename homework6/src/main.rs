@@ -1,19 +1,22 @@
 use std::env;
 
+use logs::{error, info, Logs};
+
 use homework6::client;
 use homework6::server;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let program_name = &args[0];
     let number_of_arguments = args.len() - 1;
+
+    Logs::new().color(true).init();
 
     println!();
 
     if number_of_arguments == 0 {
-        eprintln!("Error while running program : {}", &program_name);
-        eprintln!("Not enough arguments, program expects at least one argument");
-        eprintln!("Usage: cargo run [client/server] [optional ip (default localhost)] [optional port (default 8080)]");
+        error!("Error while running program");
+        error!("Not enough arguments, program expects at least one argument");
+        info!("Usage: cargo run [client/server] [optional ip (default localhost)] [optional port (default 8080)]");
         std::process::exit(1);
     }
 
@@ -31,8 +34,8 @@ fn main() {
             server::run(hostname, port);
         }
         _ => {
-            eprintln!("Unrecognized argument, only valid arguments are client and server");
-            eprintln!("Usage: cargo run [client/server] [optional ip (default localhost)] [optional port (default 8080)]");
+            error!("Unrecognized argument, only valid arguments are client and server");
+            info!("Usage: cargo run [client/server] [optional ip (default localhost)] [optional port (default 8080)]");
             std::process::exit(1);
         }
     };

@@ -17,6 +17,8 @@ pub fn deserialize_message(data: &[u8]) -> MessageType {
     serde_json::from_slice(data).unwrap()
 }
 
+// Parse an incoming message and take the first 4 bytes as the lenght
+// Disconnection requests by the client have less than 4 bytes, so they will fail the parsing.
 pub fn calculate_message_length(mut stream: &TcpStream) -> io::Result<usize> {
     let mut len_bytes = [0u8; 4];
     match stream.read_exact(&mut len_bytes) {
