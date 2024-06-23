@@ -5,6 +5,7 @@ use std::process;
 use std::sync::{Arc, Mutex};
 use std::thread;
 
+use anyhow::Result;
 use chrono::Utc;
 use image::io::Reader as ImageReader;
 
@@ -12,7 +13,7 @@ use crate::common::*;
 
 // Thread that reads user input and sends relevant data to server
 fn sending_thread(stream: Arc<Mutex<TcpStream>>) {
-    let mut stream = stream.lock().unwrap();
+    let mut stream = stream.lock().expect("FATAL ERROR: failed to lock stream");
     loop {
         println!("> Enter text to send (or file <path>, image <path>, quit)");
         let mut input = String::new();
@@ -66,7 +67,7 @@ fn sending_thread(stream: Arc<Mutex<TcpStream>>) {
 
 // Thread that listens to incoming data from server and prints it to stdout.
 fn receiving_thread(stream: Arc<Mutex<TcpStream>>) {
-    let stream = stream.lock().unwrap();
+    let stream = stream.lock().expect("FATAL ERROR: Failed to lock stream");
     // Loop through all incoming messages
     loop {
         match calculate_message_length(&stream) {
@@ -130,9 +131,9 @@ pub fn run(hostname: String, port: String) {
     let _ = thread_handle_2.join();
 }
 
-fn generate_file_message(path: &str) -> Result<MessageType, String> {
+fn generate_file_message(path: &str) -> Result<MessageType> {
     match fs::read_to_string(path) {
-        Err(why) => Err(why.to_string()),
+        Err(why) => Err(why.into()),
         Ok(message) => Ok(MessageType::File(
             path.to_string(),
             message.as_bytes().to_vec(),
@@ -140,11 +141,11 @@ fn generate_file_message(path: &str) -> Result<MessageType, String> {
     }
 }
 
-fn generate_image_message(path: &str) -> Result<MessageType, String> {
+fn generate_image_message(path: &str) -> Result<MessageType> {
     // Don't bother decoding image here, just forward it as raw bytes
     match std::fs::read(path) {
         Ok(image) => Ok(MessageType::Image(image)),
-        Err(why) => Err(why.to_string()),
+        Err(why) => Err(why.into()),
     }
 }
 
@@ -153,7 +154,7 @@ fn handle_incoming_file(path: &str, raw_bytes: &[u8]) {
     let path = format! {"files/{path}"};
 
     match OpenOptions::new()
-        .write(true) // <--------- this
+        .write(true)
         .truncate(true)
         .create(true)
         .open(path.clone())
@@ -162,7 +163,8 @@ fn handle_incoming_file(path: &str, raw_bytes: &[u8]) {
             eprint!("Cannot store into {path} with error: {why}");
         }
         Ok(mut file) => {
-            file.seek(SeekFrom::Start(0)).unwrap();
+            file.seek(SeekFrom::Start(0))
+                .expect("file seek should never fail");
             match file.write_all(raw_bytes) {
                 Err(why) => {
                     eprintln!("Failed to write into {path} with error: {why}");

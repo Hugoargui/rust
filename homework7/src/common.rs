@@ -1,8 +1,8 @@
-use anyhow::Result;
-use serde::{Deserialize, Serialize};
-
 use std::io::{self, Read, Write};
 use std::net::TcpStream;
+
+use anyhow::Result;
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum MessageType {
@@ -11,12 +11,12 @@ pub enum MessageType {
     File(String, Vec<u8>),
 }
 
-pub fn serialize_message(message: &MessageType) -> String {
-    serde_json::to_string(&message).unwrap()
+pub fn serialize_message(message: &MessageType) -> Result<String> {
+    Ok(serde_json::to_string(&message)?)
 }
 
-pub fn deserialize_message(data: &[u8]) -> MessageType {
-    serde_json::from_slice(data).unwrap()
+pub fn deserialize_message(data: &[u8]) -> Result<MessageType> {
+    Ok(serde_json::from_slice(data)?)
 }
 
 // Parse an incoming message and take the first 4 bytes as the lenght
@@ -34,11 +34,11 @@ pub fn read_message(mut stream: TcpStream, len: usize) -> Result<MessageType> {
 
     stream.read_exact(&mut buffer)?;
 
-    Ok(deserialize_message(&buffer))
+    deserialize_message(&buffer)
 }
 
 pub fn send_message(stream: &mut TcpStream, message: &MessageType) -> Result<()> {
-    let serialized = serialize_message(message);
+    let serialized = serialize_message(message)?;
 
     // Send the length of the serialized message (as 4-byte value).
     let len = serialized.len() as u32;
