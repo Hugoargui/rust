@@ -1,5 +1,6 @@
 use std::io::{self, Read, Write};
 use std::net::TcpStream;
+use std::process;
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
@@ -48,4 +49,9 @@ pub fn send_message(stream: &mut TcpStream, message: &MessageType) -> Result<()>
     stream.write_all(serialized.as_bytes())?;
 
     Ok(())
+}
+
+pub fn terminate_with_message<S: AsRef<str>>(message: S, code: i32) -> ! {
+    eprintln!("{}", message.as_ref());
+    process::exit(code);
 }

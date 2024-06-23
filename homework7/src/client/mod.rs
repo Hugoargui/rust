@@ -1,7 +1,6 @@
 use std::fs::{self, OpenOptions};
 use std::io::{self, Cursor, Seek, SeekFrom, Write};
 use std::net::TcpStream;
-use std::process;
 use std::sync::{Arc, Mutex};
 use std::thread;
 
@@ -25,8 +24,7 @@ fn sending_thread(stream: Arc<Mutex<TcpStream>>) {
 
         match command {
             "q" | "quit" => {
-                println!("Quiting client");
-                process::exit(1);
+                terminate_with_message("Quitting program", 0);
             }
             "file" => match generate_file_message(path) {
                 Err(why) => {
@@ -111,8 +109,7 @@ pub fn run(hostname: String, port: String) {
     let stream = match TcpStream::connect(&address) {
         Ok(stream) => stream,
         Err(e) => {
-            eprint!("Failed connect to address {}: {}", address, e);
-            process::exit(1);
+            terminate_with_message(format!("Failed connect to address {address}: {e}"), 1);
         }
     };
 

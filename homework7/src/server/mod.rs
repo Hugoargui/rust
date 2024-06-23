@@ -1,5 +1,4 @@
 use std::net::{SocketAddr, TcpListener, TcpStream};
-use std::process;
 use std::sync::Arc;
 use std::thread;
 
@@ -87,11 +86,10 @@ fn listen_and_accept(address: &str) {
             listener
         }
         Err(e) => {
-            eprintln!(
-                "Server failed to bind to address {} with error: {}",
-                address, e
+            terminate_with_message(
+                format!("Server failed to bind to address {address} with error: {e}"),
+                1,
             );
-            process::exit(1);
         }
     };
 
