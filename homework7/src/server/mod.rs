@@ -7,7 +7,7 @@ use dashmap::DashMap;
 use crate::common::*;
 
 fn handle_client(
-    addr: SocketAddr,
+    origin_client_addr: SocketAddr,
     stream: TcpStream,
     clients: &Arc<DashMap<SocketAddr, TcpStream>>,
 ) {
@@ -16,8 +16,8 @@ fn handle_client(
         match calculate_message_length(&stream) {
             Err(_) => {
                 // If we fail to parse len of incoming connection we assume we lost connection.
-                eprintln!("Server lost connection with client {}", addr);
-                clients.remove(&addr);
+                eprintln!("Server lost connection with client {}", origin_client_addr);
+                clients.remove(&origin_client_addr);
                 break;
             }
             Ok(len) => {
@@ -30,7 +30,7 @@ fn handle_client(
 
                 // Loop through all other clients in the client HashMap and forward the message
                 for mut client in clients.iter_mut() {
-                    let client_addr = match client.peer_addr() {
+                    let target_client_addr = match client.peer_addr() {
                         Ok(addr) => addr,
                         Err(_) => {
                             eprintln!("Failed to get client address");
@@ -38,8 +38,8 @@ fn handle_client(
                         }
                     };
 
-                    if client_addr == addr {
-                        // Don't send message to ourselves
+                    if target_client_addr == origin_client_addr {
+                        // Don't send message to client that sent it
                         continue;
                     }
 
@@ -48,29 +48,13 @@ fn handle_client(
                         Err(ref why) => {
                             eprintln!("Failed to read message: {why}")
                         }
-                        Ok(ref message) => match message {
-                            MessageType::Text(..) => {
-                                if let Err(e) = send_message(&mut client, message) {
-                                    eprint!("Failed to forward {len} bytes from client {addr} to client: {client_addr}: {e}");
-                                } else {
-                                    println!( "Forwarded {len} bytes from client {addr} to client: {client_addr}");
-                                }
-                            }
-                            MessageType::File(ref path, _) => {
-                                if let Err(e) = send_message(&mut client, message) {
-                                    eprint!("Failed to forward file {path} of {len} bytes from client {addr} to client: {client_addr}: {e}");
-                                } else {
-                                    println!( "Forwarded file {path} of {len} bytes from client {addr} to client: {client_addr}");
-                                }
-                            }
-                            MessageType::Image(..) => {
-                                if let Err(e) = send_message(&mut client, message) {
-                                    eprint!("Failed to forward image of {len} bytes from client {addr} to client: {client_addr}: {e}");
-                                } else {
-                                    println!("Forwarded image of {len} bytes from client {addr} to client: {client_addr}");
-                                }
-                            }
-                        },
+                        Ok(ref message) => handle_message(
+                            message,
+                            &origin_client_addr,
+                            &target_client_addr,
+                            &mut client,
+                            len,
+                        ),
                     }
                 }
             }
@@ -78,16 +62,49 @@ fn handle_client(
     }
 }
 
-fn listen_and_accept(address: &str) {
+fn handle_message(
+    message: &MessageType,
+    origin_client_addr: &SocketAddr,
+    target_client_addr: &SocketAddr,
+    client: &mut TcpStream,
+    len: usize,
+) {
+    match message {
+        MessageType::Text(..) => {
+            if let Err(e) = send_message(client, message) {
+                eprint!("Failed to forward {len} bytes from client {origin_client_addr} to client: {target_client_addr}: {e}");
+            } else {
+                println!("Forwarded {len} bytes from client {origin_client_addr} to client: {target_client_addr}");
+            }
+        }
+        MessageType::File(ref path, _) => {
+            if let Err(e) = send_message(client, message) {
+                eprint!("Failed to forward file {path} of {len} bytes from client {origin_client_addr} to client: {target_client_addr}: {e}");
+            } else {
+                println!( "Forwarded file {path} of {len} bytes from client {origin_client_addr} to client: {target_client_addr}");
+            }
+        }
+        MessageType::Image(..) => {
+            if let Err(e) = send_message(client, message) {
+                eprint!("Failed to forward image of {len} bytes from client {origin_client_addr} to client: {target_client_addr}: {e}");
+            } else {
+                println!(
+                    "Forwarded image of {len} bytes from client {origin_client_addr} to client: {target_client_addr}");
+            }
+        }
+    }
+}
+
+fn listen_and_accept(server_address: &str) {
     // Bind to TCP stream
-    let listener = match TcpListener::bind(address) {
+    let listener = match TcpListener::bind(server_address) {
         Ok(listener) => {
-            println!("Server listening on: {address}");
+            println!("Server listening on: {server_address}");
             listener
         }
         Err(e) => {
             terminate_with_message(
-                format!("Server failed to bind to address {address} with error: {e}"),
+                format!("Server failed to bind to address {server_address} with error: {e}"),
                 1,
             );
         }
@@ -101,17 +118,17 @@ fn listen_and_accept(address: &str) {
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
-                let addr = stream.peer_addr().expect("Failed to get clients address");
-                println!("Server established connection with client {}", addr);
+                let client_addr = stream.peer_addr().expect("Failed to get clients address");
+                println!("Server established connection with client {}", client_addr);
                 client_map.insert(
-                    addr,
+                    client_addr,
                     stream
                         .try_clone()
                         .expect("failed to insert client into client map"),
                 );
 
                 let clone = client_map.clone();
-                thread::spawn(move || handle_client(addr, stream, &clone));
+                thread::spawn(move || handle_client(client_addr, stream, &clone));
             }
             Err(e) => {
                 eprintln!("Failed to accept connection: {}", e);
@@ -121,6 +138,6 @@ fn listen_and_accept(address: &str) {
 }
 
 pub fn run(hostname: String, port: String) {
-    let address = format!("{}:{}", hostname, port);
-    listen_and_accept(&address);
+    let server_addr = format!("{}:{}", hostname, port);
+    listen_and_accept(&server_addr);
 }
