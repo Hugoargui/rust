@@ -1,3 +1,10 @@
+# NOTE ABOUT DIFFERENCES WITH HOMEWORK 6
+Only changes are: 
+- Use anyhow to get Result<T> instead of Result<T,E>
+- Add missing error handling for common library, removing all unwraps there
+- Remove unwraps in client, leaving only a few expect for FATAL errors that make sense to panic. 
+- I didn't find a use for Thiserror, there aren't really any special errors in this application. 
+-
 # Running directly from this crate
 
 To run directly, from directory rust/homework6 type: 
@@ -23,8 +30,8 @@ cargo run client localhost 8080
 Otherwise, client and server can be imported as normal crates. 
 
 ```rust
-use homework6::client;
-use homework6::server;
+use homework7::client;
+use homework7::server;
 
 // to run the server:
 server::run(hostname, port);
