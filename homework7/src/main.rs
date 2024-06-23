@@ -2,8 +2,8 @@ use std::env;
 
 use logs::{error, info, Logs};
 
-use homework6::client;
-use homework6::server;
+use homework7::client;
+use homework7::server;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -35,7 +35,7 @@ fn main() {
         }
         _ => {
             error!("Unrecognized argument, only valid arguments are client and server");
-            info!("Usage: cargo run [client/server] [optional ip (default localhost)] [optional port (default 8080)]");
+            info!("Usage: cargo run [client/server] [optional ip (default {default_host})] [optional port (default {default_port})]");
             std::process::exit(1);
         }
     };

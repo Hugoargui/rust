@@ -32,8 +32,11 @@ fn sending_thread(stream: Arc<Mutex<TcpStream>>) {
                     eprintln!("Couldn't open {path} with error: {why}")
                 }
                 Ok(message) => {
-                    println!("Sending file: {path}");
-                    send_message(&mut stream, &message);
+                    if let Err(e) = send_message(&mut stream, &message) {
+                        eprint!("Failed to send file {path}: {e}");
+                    } else {
+                        println!("Sending file: {path}");
+                    }
                 }
             },
             "image" => match generate_image_message(path) {
@@ -41,15 +44,21 @@ fn sending_thread(stream: Arc<Mutex<TcpStream>>) {
                     eprintln!("Couldn't open {path} with error: {why}")
                 }
                 Ok(message) => {
-                    println!("Sending image: {path}");
-                    send_message(&mut stream, &message);
+                    if let Err(e) = send_message(&mut stream, &message) {
+                        eprint!("Failed to send image {path}: {e}");
+                    } else {
+                        println!("Sending image: {path}");
+                    }
                 }
             },
             _ => {
                 // no image or file, forward all data as plain text
                 let new_message = MessageType::Text(input.to_string());
-                println!("Sending {new_message:?}");
-                send_message(&mut stream, &new_message);
+                if let Err(e) = send_message(&mut stream, &new_message) {
+                    eprint!("Failed to send message: {e}");
+                } else {
+                    println!("Sending {new_message:?}");
+                }
             }
         }
     }
@@ -71,16 +80,22 @@ fn receiving_thread(stream: Arc<Mutex<TcpStream>>) {
                     read_message(stream.try_clone().expect("failed to clone stream"), len);
 
                 match message {
-                    MessageType::Text(ref raw_message) => {
-                        println!("Received text: {raw_message}");
+                    Err(why) => {
+                        eprintln!("Failed to read message: {why}")
                     }
-                    MessageType::File(ref path, ref file_contents) => {
-                        handle_incoming_file(path, file_contents);
-                    }
-                    MessageType::Image(ref bytes) => {
-                        handle_incoming_image(bytes);
-                    }
+                    Ok(message) => match message {
+                        MessageType::Text(ref raw_message) => {
+                            println!("Received text: {raw_message}");
+                        }
+                        MessageType::File(ref path, ref file_contents) => {
+                            handle_incoming_file(path, file_contents);
+                        }
+                        MessageType::Image(ref bytes) => {
+                            handle_incoming_image(bytes);
+                        }
+                    },
                 }
+
                 // Done with processing, print usage again.
                 println!("> Enter text to send (or .file <path>, .image <path>, .quit)");
             }

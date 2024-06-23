@@ -1,4 +1,6 @@
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
+
 use std::io::{self, Read, Write};
 use std::net::TcpStream;
 
@@ -27,21 +29,23 @@ pub fn calculate_message_length(mut stream: &TcpStream) -> io::Result<usize> {
     }
 }
 
-pub fn read_message(mut stream: TcpStream, len: usize) -> MessageType {
+pub fn read_message(mut stream: TcpStream, len: usize) -> Result<MessageType> {
     let mut buffer = vec![0u8; len];
 
-    stream.read_exact(&mut buffer).unwrap();
+    stream.read_exact(&mut buffer)?;
 
-    deserialize_message(&buffer)
+    Ok(deserialize_message(&buffer))
 }
 
-pub fn send_message(stream: &mut TcpStream, message: &MessageType) {
+pub fn send_message(stream: &mut TcpStream, message: &MessageType) -> Result<()> {
     let serialized = serialize_message(message);
 
     // Send the length of the serialized message (as 4-byte value).
     let len = serialized.len() as u32;
-    let _ = stream.write(&len.to_be_bytes()).unwrap();
+    let _ = stream.write(&len.to_be_bytes())?;
 
     // Send the serialized message.
-    stream.write_all(serialized.as_bytes()).unwrap();
+    stream.write_all(serialized.as_bytes())?;
+
+    Ok(())
 }

@@ -22,8 +22,12 @@ fn handle_client(
                 break;
             }
             Ok(len) => {
-                let message =
-                    read_message(stream.try_clone().expect("failed to clone stream"), len);
+                let message = read_message(
+                    stream
+                        .try_clone()
+                        .expect("FATAL ERROR: failed to clone stream"),
+                    len,
+                );
 
                 // Loop through all other clients in the client HashMap and forward the message
                 for mut client in clients.iter_mut() {
@@ -42,20 +46,32 @@ fn handle_client(
 
                     // Different forwarding depending on message type
                     match message {
-                        MessageType::Text(..) => {
-                            println!(
-                                "Forwarded {len} bytes from client {addr} to client: {client_addr}"
-                            );
-                            send_message(&mut client, &message);
+                        Err(ref why) => {
+                            eprintln!("Failed to read message: {why}")
                         }
-                        MessageType::File(ref path, _) => {
-                            println!( "Forwarded file {path} of {len} bytes from client {addr} to client: {client_addr}");
-                            send_message(&mut client, &message);
-                        }
-                        MessageType::Image(..) => {
-                            println!("Forwarded image of {len} bytes from client {addr} to client: {client_addr}");
-                            send_message(&mut client, &message);
-                        }
+                        Ok(ref message) => match message {
+                            MessageType::Text(..) => {
+                                if let Err(e) = send_message(&mut client, message) {
+                                    eprint!("Failed to forward {len} bytes from client {addr} to client: {client_addr}: {e}");
+                                } else {
+                                    println!( "Forwarded {len} bytes from client {addr} to client: {client_addr}");
+                                }
+                            }
+                            MessageType::File(ref path, _) => {
+                                if let Err(e) = send_message(&mut client, message) {
+                                    eprint!("Failed to forward file {path} of {len} bytes from client {addr} to client: {client_addr}: {e}");
+                                } else {
+                                    println!( "Forwarded file {path} of {len} bytes from client {addr} to client: {client_addr}");
+                                }
+                            }
+                            MessageType::Image(..) => {
+                                if let Err(e) = send_message(&mut client, message) {
+                                    eprint!("Failed to forward image of {len} bytes from client {addr} to client: {client_addr}: {e}");
+                                } else {
+                                    println!("Forwarded image of {len} bytes from client {addr} to client: {client_addr}");
+                                }
+                            }
+                        },
                     }
                 }
             }
