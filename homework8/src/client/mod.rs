@@ -102,7 +102,7 @@ fn receiving_thread(stream: Arc<Mutex<TcpStream>>) {
     }
 }
 
-pub fn run(hostname: String, port: String) {
+pub async fn run(hostname: String, port: String) {
     let address = format!("{}:{}", hostname, port);
 
     println!("Client trying to connect to to: {address}");

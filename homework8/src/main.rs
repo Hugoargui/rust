@@ -2,10 +2,11 @@ use std::env;
 
 use logs::{error, info, Logs};
 
-use homework7::client;
-use homework7::server;
+use homework8::client;
+use homework8::server;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let args: Vec<String> = env::args().collect();
     let number_of_arguments = args.len() - 1;
 
@@ -28,10 +29,10 @@ fn main() {
     let user_option = &args[1];
     match user_option.as_str() {
         "client" => {
-            client::run(hostname, port);
+            client::run(hostname, port).await;
         }
         "server" => {
-            server::run(hostname, port);
+            server::run(hostname, port).await;
         }
         _ => {
             error!("Unrecognized argument, only valid arguments are client and server");

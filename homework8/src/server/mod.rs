@@ -1,12 +1,12 @@
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::sync::Arc;
-use std::thread;
+// use std::thread;
 
 use dashmap::DashMap;
 
 use crate::common::*;
 
-fn handle_client(
+async fn handle_client(
     origin_client_addr: SocketAddr,
     stream: TcpStream,
     clients: &Arc<DashMap<SocketAddr, TcpStream>>,
@@ -95,8 +95,10 @@ fn handle_message(
     }
 }
 
-fn listen_and_accept(server_address: &str) {
+async fn listen_and_accept(server_address: &str) {
     // Bind to TCP stream
+    // TODO: replace by tokio tcplistener
+    // Only issue I have is how to split the tokio::stream for various clients, try_clone not possible
     let listener = match TcpListener::bind(server_address) {
         Ok(listener) => {
             println!("Server listening on: {server_address}");
@@ -128,7 +130,9 @@ fn listen_and_accept(server_address: &str) {
                 );
 
                 let clone = client_map.clone();
-                thread::spawn(move || handle_client(client_addr, stream, &clone));
+                tokio::spawn(async move {
+                     handle_client(client_addr, stream, &clone).await;
+                }); 
             }
             Err(e) => {
                 eprintln!("Failed to accept connection: {}", e);
@@ -137,7 +141,7 @@ fn listen_and_accept(server_address: &str) {
     }
 }
 
-pub fn run(hostname: String, port: String) {
+pub async fn run(hostname: String, port: String) {
     let server_addr = format!("{}:{}", hostname, port);
-    listen_and_accept(&server_addr);
+    listen_and_accept(&server_addr).await;
 }

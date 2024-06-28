@@ -1,5 +1,5 @@
 [package]
-name = "homework7"
+name = "homework8"
 version = "0.1.0"
 edition = "2021"
 
@@ -13,3 +13,4 @@ logs = "*"
 serde = { version = "1.0.202", features = ["derive"] }
 serde_json = "1.0.44"
 anyhow = "1.0"
+tokio = { version = "1.38.0", features = ["full"] }
